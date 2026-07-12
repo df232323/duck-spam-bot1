@@ -1,18 +1,18 @@
 import os
 import asyncio
 import logging
-from flask import Flask, jsonify
 from threading import Thread
+from flask import Flask, jsonify
 from config import PORT
-from main import main
 
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+bot_status = {"status": "starting"}
 
-# Переменные для хранения статуса бота
-bot_status = {"status": "stopped", "thread": None}
-
+# === Flask Routes ===
 @app.route('/')
 def home():
     return """
@@ -24,9 +24,6 @@ def home():
             <p style="font-size: 14px; color: #888;">
                 <a href="/status" style="color: #4fc3f7;">Проверить статус</a> |
                 <a href="/health" style="color: #4fc3f7;">Health Check</a>
-            </p>
-            <p style="font-size: 12px; color: #555; margin-top: 50px;">
-                Telegram Bot: <a href="https://t.me/spam_duck_bot" style="color: #4fc3f7;">@spam_duck_bot</a>
             </p>
         </body>
     </html>
@@ -40,27 +37,26 @@ def status():
 def health():
     return "OK", 200
 
-def run_bot():
-    """Запуск бота в отдельном потоке"""
-    try:
-        logger.info("🚀 Запуск бота...")
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(main())
-    except Exception as e:
-        logger.error(f"❌ Ошибка бота: {e}")
-        bot_status["status"] = "error"
-        bot_status["error"] = str(e)
-
-if __name__ == "__main__":
-    # Запускаем бота в фоновом потоке
-    bot_status["status"] = "starting"
-    bot_thread = Thread(target=run_bot, daemon=True)
-    bot_thread.start()
-    bot_status["status"] = "running"
-    bot_status["thread"] = "running"
-    
-    # Запускаем веб-сервер
+# === Функция для запуска Flask в отдельном потоке ===
+def run_flask():
     port = int(os.environ.get("PORT", PORT))
     logger.info(f"🌐 Веб-сервер запущен на порту {port}")
     app.run(host='0.0.0.0', port=port)
+
+# === Основная точка входа ===
+if __name__ == "__main__":
+    # 1. Запускаем Flask в фоновом потоке (для health checks)
+    flask_thread = Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    bot_status["status"] = "running"
+
+    # 2. Запускаем бота в основном потоке (решает проблему asyncio)
+    from main import main
+    logger.info("🚀 Запуск бота в основном потоке...")
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("👋 Бот остановлен вручную")
+    except Exception as e:
+        logger.error(f"❌ Критическая ошибка бота: {e}")
+        bot_status["status"] = "error"
