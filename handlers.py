@@ -4,7 +4,10 @@ import logging
 from typing import Dict, List
 from aiogram import types, Dispatcher
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import Command  # ← ИСПРАВЛЕНО!
+try:
+    from aiogram.filters import Command  # Пытаемся использовать новый синтаксис (для aiogram 2.x)
+except ImportError:
+    from aiogram.dispatcher.filters import Command  # Если не получилось, используем старый (для aiogram 1.x)
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import database as db
