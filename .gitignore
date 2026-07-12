@@ -1,0 +1,40 @@
+# Секреты и конфиги
+.env
+.env.local
+.env.production
+
+# Данные приложения
+data/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+
+# Сессии Telethon
+*.session
+*.session-journal
+sessions/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Логи
+*.log
